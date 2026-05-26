@@ -1,0 +1,10 @@
+{
+  "name": "code-forge",
+  "description": "Orchestrated agent workflows for Claude Code — includes researcher, reviewer, and editor agents with supporting skills for the load-task → implement pipeline.",
+  "author": {
+    "name": "techyshishy",
+    "email": "emperorshishire@gmail.com"
+  },
+  "repository": "https://github.com/techyshishy/code-forge",
+  "license": "MIT"
+}
