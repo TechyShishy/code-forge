@@ -46,7 +46,6 @@ Run a continuous loop until you receive an exit signal or DONE message:
    - Follow the research workflow defined in researcher-protocol using the extracted fields (treat as ASSIGN_RESEARCH).
    - On completion, write results back and notify the orchestrator (see [Result Writing](#result-writing) below).
 3. **On ASSIGN_RESEARCH or ASSIGN_DESCRIBE (legacy SendMessage):**
-   - Send `CLAIM` with the task_id before starting work.
    - Follow the research workflow defined in researcher-protocol.
    - For ASSIGN_RESEARCH: execute the five steps (determine repository, fetch issues, score candidates, research selected issue, produce Task Brief).
    - For ASSIGN_DESCRIBE: skip to Step 4 (codebase research), then Step 5 (brief production).

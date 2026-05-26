@@ -269,14 +269,7 @@ Include line ranges where known: `path/to/file:L10-L40`. Most important files fi
 
 ## Response Format: Task Brief
 
-After completing the five steps above, first acknowledge the task, then return the Task Brief.
-
-**Acknowledge with CLAIM before starting work:**
-
-```
-CLAIM
-task_id: <id>
-```
+After completing the five steps above, return the Task Brief.
 
 ### RESULT envelope (new — preferred)
 

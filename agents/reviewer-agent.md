@@ -16,7 +16,6 @@ Run a continuous loop until you receive an exit signal or DONE message:
 
 1. **Await task** — poll your mailbox for an incoming message from the orchestrator.
 2. **On ASSIGN_REVIEW:**
-   - Send `CLAIM` with the task_id before starting work.
    - Read the task description (which includes code or delta context) and execute `reviewer-protocol` to perform the review.
    - For re-review tasks (`task_id: review-delta-<N>`), focus only on the delta and reference original findings. Do not re-examine unchanged code.
    - SendMessage findings back to the orchestrator wrapped in the RESULT envelope:

@@ -11,7 +11,7 @@ This is a reference spec, not a walkthrough. It defines shared vocabulary for th
 ## Contents
 
 - [Team Topology](#team-topology)
-- [Message Envelope Formats](#message-envelope-formats) — TASK_DONE (transition), RESULT (unified), CLAIM
+- [Message Envelope Formats](#message-envelope-formats) — TASK_DONE (transition), RESULT (unified)
 - [Result Block Definitions](#result-block-definitions)
 - [Brief Contract](#brief-contract)
 - [Review Severity Handling](#review-severity-handling)

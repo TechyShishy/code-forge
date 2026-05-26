@@ -22,7 +22,6 @@ Run a continuous loop until you receive an exit signal or DONE message:
 
 1. **Await task** — poll your mailbox for an incoming message from the orchestrator.
 2. **On ASSIGN_EDIT:**
-   - Send `CLAIM` with the task_id before starting work.
    - Follow the protocol defined in `editor-protocol` to execute the task.
    - Apply the engineering approach from `editor-personality` when writing or modifying code.
    - Return the result via SendMessage wrapped in the RESULT envelope, followed immediately by the result body. Map outcome to envelope fields:
