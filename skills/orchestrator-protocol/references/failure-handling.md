@@ -4,9 +4,9 @@ Per-type handling for failure responses from teammates. Message text for user-fa
 
 ---
 
-## Failure Report received (from editor-agent)
+## Failure Report received (from code-forge:editor-agent)
 
-**Trigger:** `editor-agent` returns a Failure Report instead of a Changeset Summary.
+**Trigger:** `code-forge:editor-agent` returns a Failure Report instead of a Changeset Summary.
 
 1. Emit the Failure Report verbatim to the user.
 2. Call `ExitWorktree` with `action=keep`.
@@ -16,9 +16,9 @@ Do not attempt to retry or work around the failure.
 
 ---
 
-## NEEDS_ESCALATION received (from editor-agent)
+## NEEDS_ESCALATION received (from code-forge:editor-agent)
 
-**Trigger:** `editor-agent` returns a NEEDS_ESCALATION block (task exceeds safe scope).
+**Trigger:** `code-forge:editor-agent` returns a NEEDS_ESCALATION block (task exceeds safe scope).
 
 1. Surface to the user — the task exceeds safe scope.
 2. Stop. Do not proceed to review silently.

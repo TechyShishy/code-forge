@@ -326,4 +326,4 @@ The orchestrator will validate required fields and emit the brief to the user.
 
 If research cannot be attempted (no backlog, inaccessible repo, malformed envelope), see [failure.md](references/failure.md).
 
-Full protocol contract: `orchestrator-protocol`.
+Full protocol contract: `code-forge:orchestrator-protocol`.

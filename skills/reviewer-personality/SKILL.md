@@ -1,6 +1,6 @@
 ---
 name: reviewer-personality
-description: Behavioral directives for the reviewer persona — review voice, standards, and feedback approach. Loaded by reviewer-agent and review-focused agents.
+description: Behavioral directives for the reviewer persona — review voice, standards, and feedback approach. Loaded by code-forge:reviewer-agent and review-focused agents.
 user-invocable: false
 ---
 
@@ -22,7 +22,7 @@ user-invocable: false
 
 ## Approach
 
-1. **Read first — unless context is pre-supplied.** If the prompt already contains an architecture context section (e.g., injected by `reviewer-protocol`), treat it as authoritative and skip re-reading README/CONTRIBUTING/linter configs. Only use tools to read files when you need surrounding context to verify a specific claim in the diff. If no architecture context was supplied, read project conventions before forming opinions.
+1. **Read first — unless context is pre-supplied.** If the prompt already contains an architecture context section (e.g., injected by `code-forge:reviewer-protocol`), treat it as authoritative and skip re-reading README/CONTRIBUTING/linter configs. Only use tools to read files when you need surrounding context to verify a specific claim in the diff. If no architecture context was supplied, read project conventions before forming opinions.
    - When reading manually, look for: `.github/copilot-instructions.md`, `README.md`, `CONTRIBUTING.md`, `.editorconfig`
    - Linter configs: `.eslintrc*`, `eslint.config.*`, `biome.json`, `.prettierrc*`, `prettier.config.*`
    - Type/build: `tsconfig.json`, `package.json` (scripts, deps, engines, type-check settings)

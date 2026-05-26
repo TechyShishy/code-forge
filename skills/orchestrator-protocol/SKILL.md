@@ -32,7 +32,7 @@ The pipeline uses a single named team, `pipeline-team`, with agents spawned just
 | Editor | `editor` | Sonnet | Implementation, file edits, staging, commits | `/implement` Step 3 |
 | Reviewer | `reviewer` | Sonnet | Code review, findings by severity | `/implement` Step 3 |
 
-**Just-in-time spawning.** `/load-task` and `/describe-task` call `TeamCreate(name: "pipeline-team")` to create an empty team container, then spawn the researcher via `Agent(subagent_type: "researcher-agent", team_name: "pipeline-team")`. `/implement` spawns editor and reviewer into the existing team via two `Agent` calls (no `TeamCreate`) before dispatching work.
+**Just-in-time spawning.** `/load-task` and `/describe-task` call `TeamCreate(name: "pipeline-team")` to create an empty team container, then spawn the researcher via `Agent(subagent_type: "code-forge:researcher-agent", team_name: "pipeline-team")`. `/implement` spawns editor and reviewer into the existing team via two `Agent` calls (no `TeamCreate`) before dispatching work.
 
 SendMessage uses team member names, not UUIDs. Names remain addressable when agents idle and resume.
 
@@ -102,7 +102,7 @@ Followed immediately by the result body block.
 | status | result_type | Orchestrator action |
 |--------|-------------|---------------------|
 | `success` | `Task Brief` | Validate fields; emit brief to user |
-| `success` | `Changeset Summary` | Dispatch `reviewer-agent` via task-list assignment |
+| `success` | `Changeset Summary` | Dispatch `code-forge:reviewer-agent` via task-list assignment |
 | `success` | `Commit Completion` | Emit result; call ExitWorktree(action=remove) |
 | `success` | `Review Findings` | Parse severity tags; apply [Review Severity Handling](#review-severity-handling) |
 | `failure` | `Failure Report` | Emit verbatim; call ExitWorktree(action=keep); stop |
@@ -125,11 +125,11 @@ Required fields (validated by `/load-task` before emitting):
 - `### Acceptance criteria` — bulleted list of criteria
 - `### Risks and unknowns` — section present (may be empty)
 
-Full format defined in [researcher-protocol](../researcher-protocol/SKILL.md).
+Full format defined in [code-forge:researcher-protocol](../researcher-protocol/SKILL.md).
 
 ### Changeset Summary
 
-Returned by `editor-agent` on successful implementation. Required fields:
+Returned by `code-forge:editor-agent` on successful implementation. Required fields:
 
 - `**Issue:**` — issue ID from brief
 - `**Model:**` — editor's model name
@@ -141,7 +141,7 @@ Returned by `editor-agent` on successful implementation. Required fields:
 
 ### Review Findings
 
-Returned by `reviewer-agent`. Findings are tagged by severity bracket:
+Returned by `code-forge:reviewer-agent`. Findings are tagged by severity bracket:
 
 - `[MUST FIX]` — blocking: correctness, safety, or acceptance criteria violations
 - `[SHOULD FIX]` — non-blocking: code quality, maintainability, style
@@ -156,7 +156,7 @@ FINDINGS: [severity-bracketed findings].
 
 ### NEEDS_ESCALATION
 
-Returned by `editor-agent` when the task exceeds safe scope after analysis. Required fields:
+Returned by `code-forge:editor-agent` when the task exceeds safe scope after analysis. Required fields:
 
 - `**Issue:**` — issue ID
 - `### Why escalation is needed` — concrete reason
@@ -167,7 +167,7 @@ Orchestrator response: surface to user, stop. Do not proceed to review silently.
 
 ### Failure Report
 
-Returned by `editor-agent` when acceptance criteria cannot be met. Required fields:
+Returned by `code-forge:editor-agent` when acceptance criteria cannot be met. Required fields:
 
 - `**Issue:**` — issue ID
 - `**Phase:**` — `Implementation`
@@ -179,7 +179,7 @@ Orchestrator response: emit verbatim, call `ExitWorktree` with `action=keep`, st
 
 ### Commit Completion
 
-Returned by `editor-agent` after staging, committing, and cherry-picking. Required fields:
+Returned by `code-forge:editor-agent` after staging, committing, and cherry-picking. Required fields:
 
 - `**Issue:**` — issue ID
 - `**Commit SHA:**` — short SHA
@@ -226,7 +226,7 @@ How the orchestrator handles each severity tag from the reviewer:
 |-----|---------------------|
 | `[GOOD]` | No action. Proceed. |
 | `[CONSIDER]` | Skip. No dispatch. Proceed. |
-| `[SHOULD FIX]` | Dispatch once to `editor-agent` via task-list assignment (task: `edit-should-fix`). No re-review after. Proceed to commit. |
+| `[SHOULD FIX]` | Dispatch once to `code-forge:editor-agent` via task-list assignment (task: `edit-should-fix`). No re-review after. Proceed to commit. |
 | `[MUST FIX]` | Enter the fix loop (see [Stall Detection](#stall-detection)). Loop until no MUST FIX items remain or a stall is detected. |
 
 ---

@@ -1,6 +1,6 @@
 ---
 name: editor-protocol
-description: Teammate editor protocol — response formats for the editor-agent in Agent Teams orchestration
+description: Teammate editor protocol — response formats for the code-forge:editor-agent in Agent Teams orchestration
 ---
 
 ## Teammate Editor — Agent Teams Mode
@@ -21,7 +21,7 @@ You are an editor teammate executing tasks assigned by the orchestrator. Execute
 
 If the task cannot be attempted at all (not: criteria unmet — use Failure Report), see [failure.md](references/failure.md).
 
-Full protocol contract: `orchestrator-protocol`.
+Full protocol contract: `code-forge:orchestrator-protocol`.
 
 ### RESULT Envelope
 

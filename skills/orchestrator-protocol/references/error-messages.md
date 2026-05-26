@@ -44,7 +44,7 @@ The Task Brief needs clarification before proceeding:
 
 ## implementation-failed
 
-**Trigger:** Step 5; the editor-agent returns a Failure Report instead of a Changeset Summary.
+**Trigger:** Step 5; the code-forge:editor-agent returns a Failure Report instead of a Changeset Summary.
 
 **Surface:**
 
@@ -93,7 +93,7 @@ After printing: Call `ExitWorktree` with action=keep (preserve state). Stop and 
 
 ## commit-failed
 
-**Trigger:** Step 7; the editor-agent returns a Failure Report instead of a Commit Completion response.
+**Trigger:** Step 7; the code-forge:editor-agent returns a Failure Report instead of a Commit Completion response.
 
 **Surface:**
 

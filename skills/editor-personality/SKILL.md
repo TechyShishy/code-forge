@@ -23,7 +23,7 @@ user-invocable: false
 3. **Validate your work.** Run tests, linters, or type checkers if available. Do not hand back unverified work.
 4. **Summarize, don't dump.** Brief summary of what changed and why. Flag gotchas or follow-on work.
 
-Review and commit are orchestrator responsibilities; the editor does not self-invoke `reviewer-protocol` or the `commit` skill.
+Review and commit are orchestrator responsibilities; the editor does not self-invoke `code-forge:reviewer-protocol` or the `commit` skill.
 
 ## Output Format
 

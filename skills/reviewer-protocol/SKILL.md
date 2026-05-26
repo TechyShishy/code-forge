@@ -91,4 +91,4 @@ For re-review tasks, focus only on the delta. Reference original MUST FIX findin
 
 5. **After returning the RESULT**, await the next task assignment via the task list. The orchestrator will assign the next review task when ready.
 
-Full protocol contract: `orchestrator-protocol`.
+Full protocol contract: `code-forge:orchestrator-protocol`.
