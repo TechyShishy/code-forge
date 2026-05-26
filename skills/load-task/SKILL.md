@@ -4,7 +4,6 @@ description: "Selects the next workable issue from the project backlog and produ
 allowed-tools:
   - TeamCreate
   - Agent
-  - SendMessage
   - TaskCreate
   - TaskUpdate
   - TaskGet
@@ -63,7 +62,7 @@ Store this as `<REPO_ROOT>`.
    )
    ```
 
-   Store `RESEARCHER_NAME = "researcher"`. Use this name in all subsequent `SendMessage` and `TaskUpdate` calls. Team member names persist across idle/resume cycles — do not convert to UUIDs.
+   Store `RESEARCHER_NAME = "researcher"`. Use this name in all subsequent `TaskUpdate` calls. Team member names persist across idle/resume cycles — do not convert to UUIDs.
 
 3. Compute a pipeline run ID using the format `load-task-<YYYYMMDDTHHmmss>` (e.g., `load-task-20260525T143000`). Store as `PIPELINE_RUN_ID`.
 

@@ -8,7 +8,6 @@ allowed-tools:
   - Agent
   - AskUserQuestion
   - Bash(git rev-parse --show-toplevel)
-  - SendMessage
   - Read
   - Write
   - TaskCreate
@@ -124,7 +123,7 @@ Agent(
 
 If either `Agent` call fails, surface the failure using the message from [error-messages.md#team-coordination-failed](../orchestrator-protocol/references/error-messages.md#team-coordination-failed) and stop. Do not attempt to spawn alternative subagents.
 
-Set the team member names used in all subsequent TaskUpdate and SendMessage calls:
+Set the team member names used in all subsequent TaskUpdate calls:
 
 ```
 EDITOR_NAME   = "editor"

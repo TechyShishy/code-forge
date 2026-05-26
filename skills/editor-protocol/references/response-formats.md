@@ -1,6 +1,6 @@
 # Editor Response Formats
 
-Reference for the four response formats returned by the code-forge:editor-agent via SendMessage.
+Reference for the four response formats returned by the code-forge:editor-agent via task result fields.
 
 ---
 

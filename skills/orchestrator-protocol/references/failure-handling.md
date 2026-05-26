@@ -29,7 +29,7 @@ The editor's NEEDS_ESCALATION block contains the scope analysis; emit it verbati
 
 ## Team coordination failure
 
-**Trigger:** SendMessage to `EDITOR_NAME` or `REVIEWER_NAME` fails, agents did not spawn, or coordination times out.
+**Trigger:** Task assignment to `EDITOR_NAME` or `REVIEWER_NAME` fails, agents did not spawn, or coordination times out.
 
 1. Output the team coordination failure block (see [error-messages.md#team-coordination-failed](error-messages.md#team-coordination-failed)).
 2. Call `ExitWorktree` with `action=keep`.

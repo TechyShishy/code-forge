@@ -32,27 +32,67 @@ Initialize: `iteration = 0`, `prev_fingerprints = []`, `stall_count = 0`, `grace
 **Invariant:** `prev_fingerprints = current_fingerprints` must execute on every iteration before looping back to step 1.
 
 1. Increment `iteration`.
-2. SendMessage to `EDITOR_NAME`:
+2. Create and assign fix task via TaskCreate + TaskUpdate:
    ```
-   ASSIGN_EDIT
-   task_id: edit-must-fix-<iteration>
-   worktree_path: <worktree path>
-   brief: Apply MUST FIX findings<if user_direction is non-empty: \nUser direction: <user_direction>>
-   acceptance_criteria:
-   - <each active MUST FIX item>
-   return_format: Changeset Summary
+   TaskCreate(
+     title           = "Apply MUST FIX findings for issue <ISSUE_ID> — iteration <REVIEW_ITERATION>",
+     description     = "goal: Apply MUST FIX findings from review\nworktree_path: <WORKTREE_PATH>\nrole: editor\nphase: fix\niteration: <iteration>\n<if USER_DIRECTION non-empty: \nuser_direction: <USER_DIRECTION>>\n\n<each active MUST FIX item as a list>",
+     status          = "pending",
+     owner           = null,
+     pipeline_run_id = "<PIPELINE_RUN_ID>",
+     worktree_path   = "<WORKTREE_PATH>",
+     role            = "editor",
+     phase           = "fix",
+     iteration       = <iteration>,
+     result_status   = null,
+     result_type     = null,
+     result_block    = null,
+     claimed_at      = null,
+     completed_at    = null,
+     archived        = false
+   )
+   
+   TaskUpdate(
+     task_id    = <FIX_TASK_ID>,
+     owner      = "editor",
+     status     = "in_progress",
+     claimed_at = "<ISO 8601 timestamp>"
+   )
    ```
-   Reset `user_direction = ""` after injecting it.
-3. Wait for editor to return a `Changeset Summary` block.
-4. SendMessage to `REVIEWER_NAME`:
+   Reset `user_direction = ""` after injecting it. Go idle; await task completion notification.
+
+3. Editor returns Changeset Summary. Update `changeset_summary = task.result_block`.
+
+4. Create and assign review task via TaskCreate + TaskUpdate:
    ```
-   ASSIGN_REVIEW
-   task_id: review-delta-<iteration>
-   worktree_path: <worktree path>
-   changeset_summary: <updated Changeset Summary>
-   return_format: Review Findings
+   TaskCreate(
+     title           = "Review issue <ISSUE_ID> — iteration <iteration>",
+     description     = "goal: Review the changeset and return severity-tagged findings\nworktree_path: <WORKTREE_PATH>\nrole: reviewer\nphase: review\niteration: <iteration>\n\n<CHANGESET_SUMMARY>",
+     status          = "pending",
+     owner           = null,
+     pipeline_run_id = "<PIPELINE_RUN_ID>",
+     worktree_path   = "<WORKTREE_PATH>",
+     role            = "reviewer",
+     phase           = "review",
+     iteration       = <iteration>,
+     result_status   = null,
+     result_type     = null,
+     result_block    = null,
+     claimed_at      = null,
+     completed_at    = null,
+     archived        = false
+   )
+   
+   TaskUpdate(
+     task_id    = <REVIEW_TASK_ID>,
+     owner      = "reviewer",
+     status     = "in_progress",
+     claimed_at = "<ISO 8601 timestamp>"
+   )
    ```
-5. Wait for reviewer to return Review Findings. Parse findings into severity buckets.
+   Go idle; await task completion notification.
+
+5. Reviewer returns Review Findings. Parse findings into severity buckets.
 6. If no MUST FIX items remain, proceed to Phase 6.3.
 7. Extract fingerprint set for this round.
 8. If `iteration == 1` or `prev_fingerprints` is empty: treat as progress (no baseline yet). Set `prev_fingerprints = current_fingerprints` and skip to step 9.

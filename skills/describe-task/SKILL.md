@@ -4,7 +4,6 @@ description: "Creates a Task Brief from a plain-language problem description. Cl
 allowed-tools:
   - TeamCreate
   - Agent
-  - SendMessage
   - TaskCreate
   - TaskUpdate
   - TaskGet

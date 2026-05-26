@@ -58,7 +58,7 @@ The Task Brief needs clarification before proceeding:
 
 ## team-coordination-failed
 
-**Trigger:** Phase 6.4; SendMessage to editor or reviewer agent fails, agents did not spawn at Step 3, or team coordination times out.
+**Trigger:** Phase 6.4; Task assignment to editor or reviewer agent fails, agents did not spawn at Step 3, or team coordination times out.
 
 **Surface:**
 
@@ -68,7 +68,7 @@ The Task Brief needs clarification before proceeding:
 The review/fix phase encountered a failure in agent communication or team setup.
 
 **What happened:**
-- <specific failure: SendMessage timeout, agent spawn failure, response parsing error, etc.>
+- <specific failure: task assignment failure, agent spawn failure, missing result fields, task timeout, etc.>
 
 **Current state:**
 - Worktree: `issue-<ID>` (preserved for inspection)
@@ -85,7 +85,7 @@ The review/fix phase encountered a failure in agent communication or team setup.
 [Changeset Summary attached]
 ~~~
 
-**Customization:** Fill in the `What happened:` bullet with the specific failure detail (e.g., "SendMessage to EDITOR_NAME timed out after 30s", "REVIEWER_NAME spawn failed: insufficient resources"), and fill the `<ID>` placeholder with the actual issue ID from the brief.
+**Customization:** Fill in the `What happened:` bullet with the specific failure detail (e.g., "Task assignment to EDITOR_NAME failed after 30s", "REVIEWER_NAME spawn failed: insufficient resources"), and fill the `<ID>` placeholder with the actual issue ID from the brief.
 
 After printing: Call `ExitWorktree` with action=keep (preserve state). Stop and wait for user direction.
 
