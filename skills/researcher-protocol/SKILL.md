@@ -269,27 +269,30 @@ Include line ranges where known: `path/to/file:L10-L40`. Most important files fi
 
 ## Response Format: Task Brief
 
-After completing the five steps above, return the Task Brief.
+After completing the five steps above, write results back to the task record via `TaskUpdate`. This is the only delivery mechanism.
 
-### RESULT envelope (new — preferred)
+### TaskUpdate (required)
 
-Return the Task Brief using the unified RESULT envelope:
+Write the result to the task record in a single call:
+
+```
+TaskUpdate(
+  taskId   = <task_id from the task record>,
+  status   = "completed",
+  metadata = {
+    result_status: "<success | failure | escalation>",
+    result_type:   "Task Brief",
+    result_block:  "<full RESULT envelope + Task Brief block(s)>",
+    completed_at:  "<ISO 8601 timestamp>"
+  }
+)
+```
+
+The `result_block` value must be the complete RESULT envelope followed immediately by the Task Brief block(s):
 
 ```
 RESULT
-task_id: <id from the incoming envelope: load-task or describe-task>
-agent: researcher
-status: success
-result_type: Task Brief
-```
-
-Followed immediately by the Task Brief block(s).
-
-**Example:**
-
-```
-RESULT
-task_id: load-task
+task_id: <id from the task record>
 agent: researcher
 status: success
 result_type: Task Brief
@@ -303,20 +306,8 @@ result_type: Task Brief
 ...
 ```
 
-### TASK_DONE (transition period — still valid)
+For shortlist mode (three briefs), include all three Task Brief blocks in `result_block`, separated by a blank line.
 
-The legacy format remains accepted by the orchestrator during the transition period (see Issue 0083 for deprecation timeline):
-
-```
-TASK_DONE
-task_id: <id from the incoming envelope: load-task or describe-task>
-result_block: Task Brief
-```
-
-Followed immediately by the Task Brief block(s).
-
-The orchestrator will validate required fields and emit the brief to the user.
-
-If research cannot be attempted (no backlog, inaccessible repo, malformed envelope), see [failure.md](references/failure.md).
+For failure or escalation outcomes, set `result_status` to `"failure"` or `"escalation"` and `result_type` to `"Failure Report"` or `"NEEDS_ESCALATION"` respectively. See [failure.md](references/failure.md).
 
 Full protocol contract: `code-forge:orchestrator-protocol`.
