@@ -52,6 +52,7 @@ On task completion (success, failure, or escalation), update the task record:
 ```
 TaskUpdate(
   taskId   = <task_id>,
+  owner    = "team-lead",
   status   = "completed",
   metadata = {
     result_status: "<success | failure | escalation>",

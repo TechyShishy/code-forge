@@ -278,6 +278,7 @@ Write the result to the task record in a single call:
 ```
 TaskUpdate(
   taskId   = <task_id from the task record>,
+  owner    = "team-lead",
   status   = "completed",
   metadata = {
     result_status: "<success | failure | escalation>",
