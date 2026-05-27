@@ -42,12 +42,14 @@ On task completion (success, failure, or escalation), update the task record:
 
 ```
 TaskUpdate(
-  task_id       = <task_id>,
-  status        = "completed",
-  result_status = "<success | failure | escalation>",
-  result_type   = "<Review Findings | Failure Report | NEEDS_ESCALATION>",
-  result_block  = "<full RESULT envelope text including the result body>",
-  completed_at  = "<ISO 8601 timestamp>"
+  taskId   = <task_id>,
+  status   = "completed",
+  metadata = {
+    result_status: "<success | failure | escalation>",
+    result_type:   "<Review Findings | Failure Report | NEEDS_ESCALATION>",
+    result_block:  "<full RESULT envelope text including the result body>",
+    completed_at:  "<ISO 8601 timestamp>"
+  }
 )
 ```
 

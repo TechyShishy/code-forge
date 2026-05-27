@@ -61,12 +61,14 @@ On task completion (success, failure, or escalation), write results via both cha
 
    ```
    TaskUpdate(
-     task_id       = <task_id>,
-     status        = "completed",
-     result_status = "<success | failure | escalation>",
-     result_type   = "Task Brief",
-     result_block  = "<full RESULT envelope text including the Task Brief block>",
-     completed_at  = "<ISO 8601 timestamp>"
+     taskId   = <task_id>,
+     status   = "completed",
+     metadata = {
+       result_status: "<success | failure | escalation>",
+       result_type:   "Task Brief",
+       result_block:  "<full RESULT envelope text including the Task Brief block>",
+       completed_at:  "<ISO 8601 timestamp>"
+     }
    )
    ```
 
