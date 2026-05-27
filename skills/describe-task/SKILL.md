@@ -124,21 +124,21 @@ Store this as `<REPO_ROOT>`.
 
    ```
    TaskCreate(
-     title           = "Describe and research task from user description",
-     description     = "goal: Produce a Task Brief from a user-provided description\nrepo_root: <REPO_ROOT>\ndescription: <full DESCRIPTION text from Step 1>\ncontext_overrides: <key=value pairs from Step 2; omit if empty>\nreturn_format: Task Brief",
-     status          = "pending",
-     owner           = null,
-     pipeline_run_id = "<PIPELINE_RUN_ID>",
-     worktree_path   = "",
-     role            = "researcher",
-     phase           = "research",
-     iteration       = 0,
-     result_status   = null,
-     result_type     = null,
-     result_block    = null,
-     claimed_at      = null,
-     completed_at    = null,
-     archived        = false
+     subject     = "Describe and research task from user description",
+     description = "goal: Produce a Task Brief from a user-provided description\nrepo_root: <REPO_ROOT>\ndescription: <full DESCRIPTION text from Step 1>\ncontext_overrides: <key=value pairs from Step 2; omit if empty>\nreturn_format: Task Brief",
+     metadata    = {
+       pipeline_run_id: "<PIPELINE_RUN_ID>",
+       worktree_path:   "",
+       role:            "researcher",
+       phase:           "research",
+       iteration:       0,
+       result_status:   null,
+       result_type:     null,
+       result_block:    null,
+       claimed_at:      null,
+       completed_at:    null,
+       archived:        false
+     }
    )
    ```
 
@@ -148,10 +148,10 @@ Store this as `<REPO_ROOT>`.
 
    ```
    TaskUpdate(
-     task_id    = <RESEARCHER_TASK_ID>,
-     owner      = "researcher",
-     status     = "in_progress",
-     claimed_at = "<ISO 8601 timestamp>"
+     taskId   = <RESEARCHER_TASK_ID>,
+     owner    = "researcher",
+     status   = "in_progress",
+     metadata = { claimed_at: "<ISO 8601 timestamp>" }
    )
    ```
 
@@ -163,9 +163,9 @@ The orchestrator goes idle after assignment. When the researcher completes the t
 
 ## Step 5 — Validate Brief
 
-Read `task.result_block` from the completed researcher task to obtain the Task Brief text.
-- If `task.result_status == "failure"`, surface `task.result_block` as a Failure Report verbatim and stop.
-- If `task.result_status == "escalation"`, surface `task.result_block` as NEEDS_ESCALATION verbatim and stop.
+Read `task.metadata.result_block` from the completed researcher task to obtain the Task Brief text.
+- If `task.metadata.result_status == "failure"`, surface `task.metadata.result_block` as a Failure Report verbatim and stop.
+- If `task.metadata.result_status == "escalation"`, surface `task.metadata.result_block` as NEEDS_ESCALATION verbatim and stop.
 
 After receiving the Task Brief, validate required fields per the brief contract in code-forge:orchestrator-protocol.
 

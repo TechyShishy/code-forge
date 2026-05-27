@@ -80,7 +80,7 @@ If the protocol is not in context, output:
 - `/load-task` validates that all *required fields* are present in the brief (per the brief contract in code-forge:orchestrator-protocol).
 - `/implement` validates that the brief is *sufficient for implementation* — no critical ambiguities, clear entry points, concrete criteria.
 
-If a Task Brief is visible in conversation context (from a prior `/load-task` invocation), use it. Otherwise, check the task-list for a completed researcher task: `TaskList(role="researcher", status="completed")` and read `task.result_block` from the most recently completed entry.
+If a Task Brief is visible in conversation context (from a prior `/load-task` invocation), use it. Otherwise, call `TaskList()` and find the most recently completed task whose `metadata.role` is `"researcher"` and `metadata.result_status` is `"success"`. Read `task.metadata.result_block` from that entry.
 
 If neither source yields a Task Brief, stop and output the message from [error-messages.md#no-task-brief](../orchestrator-protocol/references/error-messages.md#no-task-brief).
 
@@ -157,9 +157,9 @@ The researcher task was completed by `/load-task` before `/implement` was invoke
 **If the Task Brief is already validated in context (from the prerequisite check):** no TaskGet is needed — the Task Brief is already in hand. Transition directly to `waiting_for_implementation`.
 
 **If the Task Brief was read from TaskList in the prerequisite check:** validate it now:
-- `result_status` must be `"success"`.
-- `result_type` must be `"Task Brief"`.
-- `result_block` must be non-empty and pass the brief contract field checks (Issue, Title, Type, Effort, Acceptance criteria, Risks sections).
+- `task.metadata.result_status` must be `"success"`.
+- `task.metadata.result_type` must be `"Task Brief"`.
+- `task.metadata.result_block` must be non-empty and pass the brief contract field checks (Issue, Title, Type, Effort, Acceptance criteria, Risks sections).
 
 If validation fails, surface the partial brief with a gap note and stop. Do not proceed to implementation with an incomplete brief.
 
@@ -175,21 +175,21 @@ Create the implementation task:
 
 ```
 TaskCreate(
-  title           = "Implement issue <ISSUE_ID>",
-  description     = "goal: Implement the changes described in the Task Brief below\nworktree_path: <WORKTREE_PATH>\nrole: editor\nphase: implement\niteration: 0\n\n<full Task Brief text>",
-  status          = "pending",
-  owner           = null,
-  pipeline_run_id = "<PIPELINE_RUN_ID>",
-  worktree_path   = "<WORKTREE_PATH>",
-  role            = "editor",
-  phase           = "implement",
-  iteration       = 0,
-  result_status   = null,
-  result_type     = null,
-  result_block    = null,
-  claimed_at      = null,
-  completed_at    = null,
-  archived        = false
+  subject     = "Implement issue <ISSUE_ID>",
+  description = "goal: Implement the changes described in the Task Brief below\n\n<full Task Brief text>",
+  metadata    = {
+    pipeline_run_id: "<PIPELINE_RUN_ID>",
+    worktree_path:   "<WORKTREE_PATH>",
+    role:            "editor",
+    phase:           "implement",
+    iteration:       0,
+    result_status:   null,
+    result_type:     null,
+    result_block:    null,
+    claimed_at:      null,
+    completed_at:    null,
+    archived:        false
+  }
 )
 ```
 
@@ -199,10 +199,10 @@ Assign to the editor:
 
 ```
 TaskUpdate(
-  task_id    = <IMPL_TASK_ID>,
-  owner      = <EDITOR_NAME>,
-  status     = "in_progress",
-  claimed_at = "<ISO 8601 timestamp>"
+  taskId   = <IMPL_TASK_ID>,
+  owner    = <EDITOR_NAME>,
+  status   = "in_progress",
+  metadata = { claimed_at: "<ISO 8601 timestamp>" }
 )
 ```
 
@@ -210,27 +210,27 @@ TaskUpdate(
 
 The orchestrator goes idle. It is awakened when the editor completes the implementation task and a task completion notification arrives in the orchestrator's mailbox. Read the result fields from the completed task:
 
-- `task.result_status` — `success`, `failure`, or `escalation`
-- `task.result_type` — `Changeset Summary`, `Failure Report`, or `NEEDS_ESCALATION`
-- `task.result_block` — full result text
+- `task.metadata.result_status` — `success`, `failure`, or `escalation`
+- `task.metadata.result_type` — `Changeset Summary`, `Failure Report`, or `NEEDS_ESCALATION`
+- `task.metadata.result_block` — full result text
 
 ### Route on result
 
 **`result_status == "escalation"` (NEEDS_ESCALATION):**
-- Surface `task.result_block` verbatim to the user. The task exceeds safe scope.
+- Surface `task.metadata.result_block` verbatim to the user. The task exceeds safe scope.
 - Do not proceed to review.
 - Call [Team Cleanup](#team-cleanup).
 - Stop.
 <!-- FIXME(0085): verify escalation handling matches issue 0085 resolution when available -->
 
 **`result_status == "failure"` (Failure Report):**
-- Surface `task.result_block` verbatim per [error-messages.md#implementation-failed](../orchestrator-protocol/references/error-messages.md#implementation-failed) (in code-forge:orchestrator-protocol).
+- Surface `task.metadata.result_block` verbatim per [error-messages.md#implementation-failed](../orchestrator-protocol/references/error-messages.md#implementation-failed) (in code-forge:orchestrator-protocol).
 - Call `ExitWorktree(action=keep)`.
 - Call [Team Cleanup](#team-cleanup).
 - Stop.
 
 **`result_status == "success"` (Changeset Summary):**
-- Store `CHANGESET_SUMMARY = task.result_block`.
+- Store `CHANGESET_SUMMARY = task.metadata.result_block`.
 - Transition: set `CURRENT_STATE = "waiting_for_review"`.
 
 ---
@@ -260,21 +260,21 @@ Create the review task:
 
 ```
 TaskCreate(
-  title           = "Review issue <ISSUE_ID> — iteration <REVIEW_ITERATION>",
-  description     = "goal: Review the changeset and return severity-tagged findings\nworktree_path: <WORKTREE_PATH>\nrole: reviewer\nphase: review\niteration: <REVIEW_ITERATION>\n\n<CHANGESET_SUMMARY>",
-  status          = "pending",
-  owner           = null,
-  pipeline_run_id = "<PIPELINE_RUN_ID>",
-  worktree_path   = "<WORKTREE_PATH>",
-  role            = "reviewer",
-  phase           = "review",
-  iteration       = <REVIEW_ITERATION>,
-  result_status   = null,
-  result_type     = null,
-  result_block    = null,
-  claimed_at      = null,
-  completed_at    = null,
-  archived        = false
+  subject     = "Review issue <ISSUE_ID> — iteration <REVIEW_ITERATION>",
+  description = "goal: Review the changeset and return severity-tagged findings\n\n<CHANGESET_SUMMARY>",
+  metadata    = {
+    pipeline_run_id: "<PIPELINE_RUN_ID>",
+    worktree_path:   "<WORKTREE_PATH>",
+    role:            "reviewer",
+    phase:           "review",
+    iteration:       <REVIEW_ITERATION>,
+    result_status:   null,
+    result_type:     null,
+    result_block:    null,
+    claimed_at:      null,
+    completed_at:    null,
+    archived:        false
+  }
 )
 ```
 
@@ -284,10 +284,10 @@ Assign:
 
 ```
 TaskUpdate(
-  task_id    = <REVIEW_TASK_ID>,
-  owner      = <REVIEWER_NAME>,
-  status     = "in_progress",
-  claimed_at = "<ISO 8601 timestamp>"
+  taskId   = <REVIEW_TASK_ID>,
+  owner    = <REVIEWER_NAME>,
+  status   = "in_progress",
+  metadata = { claimed_at: "<ISO 8601 timestamp>" }
 )
 ```
 
@@ -295,7 +295,7 @@ For re-reviews (`REVIEW_ITERATION > 1`), note that the reviewer should focus on 
 
 ### Phase R2 — Wait for review completion
 
-The orchestrator goes idle. It is awakened when the reviewer completes the review task and a task completion notification arrives in the orchestrator's mailbox. Read `task.result_block` as Review Findings. Parse findings into severity buckets (`MUST_FIX`, `SHOULD_FIX`, `CONSIDER`, `GOOD`).
+The orchestrator goes idle. It is awakened when the reviewer completes the review task and a task completion notification arrives in the orchestrator's mailbox. Read `task.metadata.result_block` as Review Findings. Parse findings into severity buckets (`MUST_FIX`, `SHOULD_FIX`, `CONSIDER`, `GOOD`).
 
 If `REVIEW_ITERATION == 1`: set `ACTIVE_MUST_FIX = <all MUST FIX items from findings>`.
 If `REVIEW_ITERATION > 1`: update `ACTIVE_MUST_FIX` to items still present in current findings.
@@ -310,29 +310,29 @@ Create a fix task for SHOULD FIX:
 
 ```
 TaskCreate(
-  title           = "Apply SHOULD FIX findings for issue <ISSUE_ID>",
-  description     = "goal: Apply SHOULD FIX findings from review\nworktree_path: <WORKTREE_PATH>\nrole: editor\nphase: fix\niteration: <REVIEW_ITERATION>\n\n<each SHOULD FIX item as a list>",
-  status          = "pending",
-  owner           = null,
-  pipeline_run_id = "<PIPELINE_RUN_ID>",
-  worktree_path   = "<WORKTREE_PATH>",
-  role            = "editor",
-  phase           = "fix",
-  iteration       = <REVIEW_ITERATION>,
-  result_status   = null,
-  result_type     = null,
-  result_block    = null,
-  claimed_at      = null,
-  completed_at    = null,
-  archived        = false
+  subject     = "Apply SHOULD FIX findings for issue <ISSUE_ID>",
+  description = "goal: Apply SHOULD FIX findings from review\n\n<each SHOULD FIX item as a list>",
+  metadata    = {
+    pipeline_run_id: "<PIPELINE_RUN_ID>",
+    worktree_path:   "<WORKTREE_PATH>",
+    role:            "editor",
+    phase:           "fix",
+    iteration:       <REVIEW_ITERATION>,
+    result_status:   null,
+    result_type:     null,
+    result_block:    null,
+    claimed_at:      null,
+    completed_at:    null,
+    archived:        false
+  }
 )
 ```
 
 Append to `PIPELINE_TASK_IDS`. Assign to `EDITOR_NAME`. Go idle; await task completion notification.
 
-Check `task.result_status`:
-- **`failure` or `escalation`:** Surface `task.result_block` verbatim. Call `ExitWorktree(action=keep)`. Call [Team Cleanup](#team-cleanup). Stop.
-- **`success`:** Update `CHANGESET_SUMMARY = task.result_block`.
+Check `task.metadata.result_status`:
+- **`failure` or `escalation`:** Surface `task.metadata.result_block` verbatim. Call `ExitWorktree(action=keep)`. Call [Team Cleanup](#team-cleanup). Stop.
+- **`success`:** Update `CHANGESET_SUMMARY = task.metadata.result_block`.
 
 No re-review. Proceed to Phase R5.
 
@@ -386,21 +386,21 @@ Create fix task:
 
 ```
 TaskCreate(
-  title           = "Apply MUST FIX findings for issue <ISSUE_ID> — iteration <REVIEW_ITERATION>",
-  description     = "goal: Apply MUST FIX findings from review\nworktree_path: <WORKTREE_PATH>\nrole: editor\nphase: fix\niteration: <REVIEW_ITERATION>\n<if USER_DIRECTION non-empty: \nuser_direction: <USER_DIRECTION>>\n\n<each active MUST FIX item as a list>",
-  status          = "pending",
-  owner           = null,
-  pipeline_run_id = "<PIPELINE_RUN_ID>",
-  worktree_path   = "<WORKTREE_PATH>",
-  role            = "editor",
-  phase           = "fix",
-  iteration       = <REVIEW_ITERATION>,
-  result_status   = null,
-  result_type     = null,
-  result_block    = null,
-  claimed_at      = null,
-  completed_at    = null,
-  archived        = false
+  subject     = "Apply MUST FIX findings for issue <ISSUE_ID> — iteration <REVIEW_ITERATION>",
+  description = "goal: Apply MUST FIX findings from review\n<if USER_DIRECTION non-empty: \nuser_direction: <USER_DIRECTION>>\n\n<each active MUST FIX item as a list>",
+  metadata    = {
+    pipeline_run_id: "<PIPELINE_RUN_ID>",
+    worktree_path:   "<WORKTREE_PATH>",
+    role:            "editor",
+    phase:           "fix",
+    iteration:       <REVIEW_ITERATION>,
+    result_status:   null,
+    result_type:     null,
+    result_block:    null,
+    claimed_at:      null,
+    completed_at:    null,
+    archived:        false
+  }
 )
 ```
 
@@ -408,9 +408,9 @@ Reset `USER_DIRECTION = ""` after injecting it. Append to `PIPELINE_TASK_IDS`. A
 
 Go idle; await task completion notification.
 
-Check `task.result_status`:
-- **`failure` or `escalation`:** Surface `task.result_block` verbatim. Call `ExitWorktree(action=keep)`. Call [Team Cleanup](#team-cleanup). Stop.
-- **`success`:** Update `CHANGESET_SUMMARY = task.result_block`.
+Check `task.metadata.result_status`:
+- **`failure` or `escalation`:** Surface `task.metadata.result_block` verbatim. Call `ExitWorktree(action=keep)`. Call [Team Cleanup](#team-cleanup). Stop.
+- **`success`:** Update `CHANGESET_SUMMARY = task.metadata.result_block`.
 
 Set `PREV_FINGERPRINTS = CURRENT_FINGERPRINTS`. Return to Phase R1 (dispatch re-review, increment `REVIEW_ITERATION`).
 
@@ -428,21 +428,21 @@ Create the commit task:
 
 ```
 TaskCreate(
-  title           = "Commit issue <ISSUE_ID>",
-  description     = "goal: Stage, commit, and cherry-pick the changes from the Changeset Summary\nworktree_path: <WORKTREE_PATH>\nrole: editor\nphase: commit\niteration: 0\n\n<CHANGESET_SUMMARY>\n\nInstructions:\n- Stage exactly the files listed in the Changeset Summary's 'Files changed' section\n- Construct commit message: subject from 'Proposed commit subject' (imperative, ≤50 chars); body from 'Proposed commit body' (1 blank line after subject; omit if empty); trailers: Fixes/Closes #N from 'Issue reference', Co-authored-by: Claude <model-name> <noreply@anthropic.com>\n- HARD BAN on Conventional Commits format (no feat:, fix:, chore:, etc. prefixes)\n- Before committing, call mcp-human-interface/wait-for-interaction (user must be present for PGP passphrase)\n- Commit using git heredoc pattern\n- Capture the short SHA\n- Cherry-pick the commit to main",
-  status          = "pending",
-  owner           = null,
-  pipeline_run_id = "<PIPELINE_RUN_ID>",
-  worktree_path   = "<WORKTREE_PATH>",
-  role            = "editor",
-  phase           = "commit",
-  iteration       = 0,
-  result_status   = null,
-  result_type     = null,
-  result_block    = null,
-  claimed_at      = null,
-  completed_at    = null,
-  archived        = false
+  subject     = "Commit issue <ISSUE_ID>",
+  description = "goal: Stage, commit, and cherry-pick the changes from the Changeset Summary\n\n<CHANGESET_SUMMARY>\n\nInstructions:\n- Stage exactly the files listed in the Changeset Summary's 'Files changed' section\n- Construct commit message: subject from 'Proposed commit subject' (imperative, ≤50 chars); body from 'Proposed commit body' (1 blank line after subject; omit if empty); trailers: Fixes/Closes #N from 'Issue reference', Co-authored-by: Claude <model-name> <noreply@anthropic.com>\n- HARD BAN on Conventional Commits format (no feat:, fix:, chore:, etc. prefixes)\n- Before committing, call mcp-human-interface/wait-for-interaction (user must be present for PGP passphrase)\n- Commit using git heredoc pattern\n- Capture the short SHA\n- Cherry-pick the commit to main",
+  metadata    = {
+    pipeline_run_id: "<PIPELINE_RUN_ID>",
+    worktree_path:   "<WORKTREE_PATH>",
+    role:            "editor",
+    phase:           "commit",
+    iteration:       0,
+    result_status:   null,
+    result_type:     null,
+    result_block:    null,
+    claimed_at:      null,
+    completed_at:    null,
+    archived:        false
+  }
 )
 ```
 
@@ -452,10 +452,10 @@ Assign to the editor:
 
 ```
 TaskUpdate(
-  task_id    = <COMMIT_TASK_ID>,
-  owner      = <EDITOR_NAME>,
-  status     = "in_progress",
-  claimed_at = "<ISO 8601 timestamp>"
+  taskId   = <COMMIT_TASK_ID>,
+  owner    = <EDITOR_NAME>,
+  status   = "in_progress",
+  metadata = { claimed_at: "<ISO 8601 timestamp>" }
 )
 ```
 
@@ -466,13 +466,13 @@ The orchestrator goes idle. It is awakened when the editor completes the commit 
 ### Route on result
 
 **`result_status == "failure"`:**
-- Surface `task.result_block` verbatim per [error-messages.md#commit-failed](../orchestrator-protocol/references/error-messages.md#commit-failed) (in code-forge:orchestrator-protocol).
+- Surface `task.metadata.result_block` verbatim per [error-messages.md#commit-failed](../orchestrator-protocol/references/error-messages.md#commit-failed) (in code-forge:orchestrator-protocol).
 - Call `ExitWorktree(action=keep)`.
 - Call [Team Cleanup](#team-cleanup).
 - Stop.
 
 **`result_status == "success"`:**
-- Store `COMMIT_RESULT = task.result_block`.
+- Store `COMMIT_RESULT = task.metadata.result_block`.
 - Extract commit SHA and cherry-pick status from the result.
 - Transition: set `CURRENT_STATE = "done"`.
 
@@ -511,7 +511,7 @@ Called on all exit paths (success, failure, escalation, and abort).
 
    For each `task_id` in `PIPELINE_TASK_IDS`:
    ```
-   TaskUpdate(task_id = <id>, archived = true)
+   TaskUpdate(taskId = <id>, metadata = { archived: true })
    ```
 
 2. Delete the pipeline team:

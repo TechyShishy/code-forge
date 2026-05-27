@@ -70,21 +70,21 @@ Store this as `<REPO_ROOT>`.
 
    ```
    TaskCreate(
-     title           = "Select and research next backlog issue",
-     description     = "goal: Select the best workable issue from the project backlog and produce a Task Brief\nrepo_root: <REPO_ROOT>\nuser_args: <arguments from user invocation, or empty string>\ncontext_overrides: <optional overlay instructions, or empty string>",
-     status          = "pending",
-     owner           = null,
-     pipeline_run_id = "<PIPELINE_RUN_ID>",
-     worktree_path   = "",
-     role            = "researcher",
-     phase           = "research",
-     iteration       = 0,
-     result_status   = null,
-     result_type     = null,
-     result_block    = null,
-     claimed_at      = null,
-     completed_at    = null,
-     archived        = false
+     subject     = "Select and research next backlog issue",
+     description = "goal: Select the best workable issue from the project backlog and produce a Task Brief\nrepo_root: <REPO_ROOT>\nuser_args: <arguments from user invocation, or empty string>\ncontext_overrides: <optional overlay instructions, or empty string>",
+     metadata    = {
+       pipeline_run_id: "<PIPELINE_RUN_ID>",
+       worktree_path:   "",
+       role:            "researcher",
+       phase:           "research",
+       iteration:       0,
+       result_status:   null,
+       result_type:     null,
+       result_block:    null,
+       claimed_at:      null,
+       completed_at:    null,
+       archived:        false
+     }
    )
    ```
 
@@ -94,10 +94,10 @@ Store this as `<REPO_ROOT>`.
 
    ```
    TaskUpdate(
-     task_id    = <RESEARCHER_TASK_ID>,
-     owner      = "researcher",
-     status     = "in_progress",
-     claimed_at = "<ISO 8601 timestamp>"
+     taskId   = <RESEARCHER_TASK_ID>,
+     owner    = "researcher",
+     status   = "in_progress",
+     metadata = { claimed_at: "<ISO 8601 timestamp>" }
    )
    ```
 
@@ -110,9 +110,9 @@ The researcher automatically loads the `code-forge:researcher-protocol` skill, w
 The orchestrator goes idle after assigning the task. When the researcher completes it, a task completion notification arrives in the orchestrator's mailbox, waking it to read the result.
 
 Once awakened:
-- Read `task.result_block` to obtain the Task Brief text.
-- If `task.result_status == "failure"`, surface `task.result_block` as a Failure Report verbatim and stop.
-- If `task.result_status == "escalation"`, surface `task.result_block` as NEEDS_ESCALATION verbatim and stop.
+- Read `task.metadata.result_block` to obtain the Task Brief text.
+- If `task.metadata.result_status == "failure"`, surface `task.metadata.result_block` as a Failure Report verbatim and stop.
+- If `task.metadata.result_status == "escalation"`, surface `task.metadata.result_block` as NEEDS_ESCALATION verbatim and stop.
 
 After receiving the Task Brief, validate required fields per the brief contract in code-forge:orchestrator-protocol.
 
