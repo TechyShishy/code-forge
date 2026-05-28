@@ -31,7 +31,7 @@ Event-driven state machine for end-to-end implementation. Reads a Task Brief, en
 - **Sufficiency first.** Validate the brief before entering the worktree (Step 1); if insufficient, bail out and direct the user back to `/load-task`.
 - **Trust the brief.** File-path or assumption staleness surfaces during implementation when the editor attempts edits.
 - **Worktree second.** Enter the worktree after sufficiency check passes (Step 2), before spawning any subagent.
-- **Just-in-time team.** `pipeline-team` was created by `/load-task`. Step 3 spawns editor and reviewer into it. If the team was not created upstream, `Agent` will error — surface the error and stop.
+- **Just-in-time team.** `pipeline-team` was created by `/load-task`. Step 3 spawns the editor into it; the reviewer is spawned just-in-time when entering `waiting_for_review`. If either `Agent` call fails, surface the error and stop.
 - **Task-list primary.** All phase coordination uses TaskCreate + TaskUpdate(owner) for assignment. The orchestrator goes idle after each assignment and is awakened exclusively by task completion notifications in its mailbox.
 - **TeamDelete on every exit.** Call TeamDelete on all exit paths: success, failure, escalation, and abort. <!-- FIXME(0086): TeamDelete integration pending issue 0086 — call TeamDelete(name="pipeline-team") here once available -->
 - **Archive on completion.** After all phases complete (or on abort), call TaskUpdate(archived=true) for every task belonging to PIPELINE_RUN_ID.
@@ -51,7 +51,7 @@ Each state creates one or more tasks, assigns them to team members, and goes idl
 - [Prerequisite: Task Brief in Context or Task-List](#prerequisite-task-brief-in-context-or-task-list)
 - [Step 1 — Validate Brief Sufficiency](#step-1--validate-brief-sufficiency)
 - [Step 2 — Enter the Worktree](#step-2--enter-the-worktree)
-- [Step 3 — Spawn Editor and Reviewer into Pipeline Team](#step-3--spawn-editor-and-reviewer-into-pipeline-team)
+- [Step 3 — Spawn Editor into Pipeline Team](#step-3--spawn-editor-into-pipeline-team)
 - [Step 4 — Initialize State Machine](#step-4--initialize-state-machine)
 - [State: waiting_for_research](#state-waiting_for_research)
 - [State: waiting_for_implementation](#state-waiting_for_implementation)
@@ -103,9 +103,9 @@ If `EnterWorktree` fails or this is not a git repo, proceed without a worktree, 
 
 ---
 
-## Step 3 — Spawn Editor and Reviewer into Pipeline Team
+## Step 3 — Spawn Editor into Pipeline Team
 
-`pipeline-team` must have been created by `/load-task` or `/describe-task` earlier in this session. Spawn editor and reviewer into it:
+`pipeline-team` must have been created by `/load-task` or `/describe-task` earlier in this session. Spawn the editor into it:
 
 ```
 Agent(
@@ -113,24 +113,18 @@ Agent(
   name: "editor",
   team_name: "pipeline-team"
 )
-
-Agent(
-  subagent_type: "code-forge:reviewer-agent",
-  name: "reviewer",
-  team_name: "pipeline-team"
-)
 ```
 
-If either `Agent` call fails, surface the failure using the message from [error-messages.md#team-coordination-failed](../orchestrator-protocol/references/error-messages.md#team-coordination-failed) and stop. Do not attempt to spawn alternative subagents.
+If the `Agent` call fails, surface the failure using the message from [error-messages.md#team-coordination-failed](../orchestrator-protocol/references/error-messages.md#team-coordination-failed) and stop. Do not attempt to spawn alternative subagents.
 
-Set the team member names used in all subsequent TaskUpdate calls:
+Set the team member name used in all subsequent TaskUpdate calls:
 
 ```
 EDITOR_NAME   = "editor"
 REVIEWER_NAME = "reviewer"
 ```
 
-These names are stable across idle/resume cycles — do not convert them to UUIDs.
+`REVIEWER_NAME` is set here for use in later TaskUpdate calls. The reviewer agent itself is spawned just-in-time when entering `waiting_for_review`.
 
 ---
 
@@ -237,7 +231,21 @@ The orchestrator goes idle. It is awakened when the editor completes the impleme
 
 ## State: waiting_for_review
 
-**Skip condition:** If the change is a single-line typo fix, whitespace-only change, or one-word rename — skip this state entirely and transition to `waiting_for_commit`.
+**Skip condition:** If the change is a single-line typo fix, whitespace-only change, or one-word rename — skip this state entirely and transition to `waiting_for_commit`. Do not spawn the reviewer.
+
+### Spawn reviewer
+
+Spawn the reviewer into the pipeline team now (just-in-time):
+
+```
+Agent(
+  subagent_type: "code-forge:reviewer-agent",
+  name: "reviewer",
+  team_name: "pipeline-team"
+)
+```
+
+If the `Agent` call fails, surface the failure using the message from [error-messages.md#team-coordination-failed](../orchestrator-protocol/references/error-messages.md#team-coordination-failed). Call `ExitWorktree(action=keep)`. Call [Team Cleanup](#team-cleanup). Stop.
 
 ### Review loop variables
 
