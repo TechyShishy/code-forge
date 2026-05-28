@@ -196,9 +196,21 @@ The orchestrator goes idle after assignment. When the researcher completes the t
 
 ## Step 5 — Validate Brief
 
-Read `task.metadata.result_block` from the completed researcher task to obtain the Task Brief text.
-- If `task.metadata.result_status == "failure"`, surface `task.metadata.result_block` as a Failure Report verbatim and stop.
-- If `task.metadata.result_status == "escalation"`, surface `task.metadata.result_block` as NEEDS_ESCALATION verbatim and stop.
+Retrieve the completed researcher task record:
+
+```
+task = TaskGet(taskId = <RESEARCHER_TASK_ID>)
+```
+
+Metadata fields on the returned task object:
+- `task.metadata.result_status` — `"success"`, `"failure"`, or `"escalation"`
+- `task.metadata.result_type` — `"Task Brief"`, `"Failure Report"`, or `"NEEDS_ESCALATION"`
+- `task.metadata.result_block` — string containing the full result block text
+
+Branch on `task.metadata.result_status`:
+- If `"failure"`: surface `task.metadata.result_block` as a Failure Report verbatim and stop.
+- If `"escalation"`: surface `task.metadata.result_block` as NEEDS_ESCALATION verbatim and stop.
+- If `"success"`: read `task.metadata.result_block` to obtain the Task Brief text.
 
 After receiving the Task Brief, validate required fields per the brief contract in code-forge:orchestrator-protocol.
 
