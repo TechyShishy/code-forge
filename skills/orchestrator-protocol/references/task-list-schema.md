@@ -27,8 +27,8 @@ All pipeline-specific fields are stored in the `metadata` object on the task. Th
 |-------|------|---------|------------|
 | `pipeline_run_id` | string | Stable identifier grouping all tasks for one pipeline invocation (e.g. `implement-0092-20260525T143000`) | Set at creation; never changed |
 | `worktree_path` | string | Absolute path to the git worktree the agent must operate in | Set at creation; never changed |
-| `role` | enum | Agent role for this task: `researcher` \| `editor` \| `reviewer` | Set at creation; never changed |
-| `phase` | enum | Work phase: `research` \| `implement` \| `review` \| `fix` \| `commit` | Set at creation; never changed |
+| `role` | enum | Agent role for this task: `researcher` \| `editor` \| `reviewer` \| `team-lead` | Set at creation; never changed |
+| `phase` | enum | Work phase: `research` \| `implement` \| `review` \| `fix` \| `commit` \| `orchestration` | Set at creation; never changed |
 | `iteration` | integer | Fix-loop counter; `0` for non-fix phases; `1`+ for successive fix rounds | Set at creation; never changed |
 | `result_status` | enum \| null | Outcome written by agent: `success` \| `failure` \| `escalation`; `null` until completed | Agent writes once on completion |
 | `result_type` | enum \| null | Names the result block: `Task Brief` \| `Changeset Summary` \| `Review Findings` \| `Commit Completion` \| `Failure Report` \| `NEEDS_ESCALATION`; `null` until completed | Agent writes once on completion |
@@ -171,8 +171,8 @@ TaskCreate(
   metadata    = {
     pipeline_run_id: "<run_id>",
     worktree_path:   "<absolute_path>",
-    role:            "<researcher | editor | reviewer>",
-    phase:           "<research | implement | review | fix | commit>",
+    role:            "<researcher | editor | reviewer | team-lead>",
+    phase:           "<research | implement | review | fix | commit | orchestration>",
     iteration:       0,
     result_status:   null,
     result_type:     null,

@@ -120,7 +120,40 @@ Store this as `<REPO_ROOT>`.
 
 4. Compute a pipeline run ID using the format `describe-task-<YYYYMMDDTHHmmss>` (e.g., `describe-task-20260525T143000`). Store as `PIPELINE_RUN_ID`.
 
-5. Create the researcher task via TaskCreate:
+5. Create the sentinel task and assign it to `team-lead` before spawning any agent work. This keeps the task list from being auto-cleared by the UI while the orchestrator is reading back the researcher's result:
+
+   ```
+   TaskCreate(
+     subject     = "Pipeline orchestration — <PIPELINE_RUN_ID>",
+     description = "Held in_progress by the team-lead to prevent UI auto-cleanup of the task list while the orchestrator reads back researcher results.",
+     metadata    = {
+       pipeline_run_id: "<PIPELINE_RUN_ID>",
+       worktree_path:   "",
+       role:            "team-lead",
+       phase:           "orchestration",
+       iteration:       0,
+       result_status:   null,
+       result_type:     null,
+       result_block:    null,
+       claimed_at:      null,
+       completed_at:    null,
+       archived:        false
+     }
+   )
+   ```
+
+   Store the returned task ID as `SENTINEL_TASK_ID`. Then assign it immediately:
+
+   ```
+   TaskUpdate(
+     taskId   = <SENTINEL_TASK_ID>,
+     owner    = "team-lead",
+     status   = "in_progress",
+     metadata = { claimed_at: "<ISO 8601 timestamp>" }
+   )
+   ```
+
+6. Create the researcher task via TaskCreate:
 
    ```
    TaskCreate(
@@ -144,7 +177,7 @@ Store this as `<REPO_ROOT>`.
 
    Store the returned task ID as `RESEARCHER_TASK_ID`.
 
-6. Assign the task to the researcher via TaskUpdate (this wakes the agent):
+7. Assign the task to the researcher via TaskUpdate (this wakes the agent):
 
    ```
    TaskUpdate(
@@ -176,6 +209,16 @@ If any required field is missing, surface the partial brief to the user with a n
 ## Step 6 — Emit Result
 
 Following the `/orchestrate` result contract, emit the Task Brief verbatim to the user without reformatting or summary.
+
+Then complete the sentinel task:
+
+```
+TaskUpdate(
+  taskId   = <SENTINEL_TASK_ID>,
+  status   = "completed",
+  metadata = { completed_at: "<ISO 8601 timestamp>" }
+)
+```
 
 End with:
 

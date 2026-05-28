@@ -11,6 +11,7 @@ This is a reference spec, not a walkthrough. It defines shared vocabulary for th
 ## Contents
 
 - [Team Topology](#team-topology)
+- [Sentinel Task Pattern](#sentinel-task-pattern)
 - [Message Envelope Formats](#message-envelope-formats) — TASK_DONE (transition), RESULT (unified)
 - [Result Block Definitions](#result-block-definitions)
 - [Brief Contract](#brief-contract)
@@ -37,6 +38,42 @@ The pipeline uses a single named team, `pipeline-team`, with agents spawned just
 SendMessage uses team member names, not UUIDs. Names remain addressable when agents idle and resume.
 
 The orchestrator routes; it does not implement, research, or review.
+
+---
+
+## Sentinel Task Pattern
+
+The UI auto-clears the task list 5 seconds after the last task transitions to `completed`. In the research phase, the researcher is the only worker task — when it completes, the cleanup timer starts immediately, racing the orchestrator's attempt to read back `result_block`.
+
+**Fix:** the orchestrator creates a sentinel task assigned to `team-lead` and sets it to `in_progress` before spawning the researcher. As long as the sentinel is in progress, the "all completed" condition never fires. The orchestrator completes the sentinel only after it has read and emitted the researcher's result.
+
+### Sentinel lifecycle
+
+```
+orchestrator creates sentinel → assigns to team-lead (in_progress)
+  → spawns researcher → researcher completes
+  → orchestrator wakes, reads result_block (sentinel still in_progress)
+  → orchestrator emits brief to user
+  → orchestrator completes sentinel
+```
+
+### Sentinel task shape
+
+```
+TaskCreate(
+  subject     = "Pipeline orchestration — <PIPELINE_RUN_ID>",
+  description = "Held in_progress by the team-lead to prevent UI auto-cleanup of the task list while the orchestrator reads back researcher results.",
+  metadata    = {
+    pipeline_run_id: "<PIPELINE_RUN_ID>",
+    worktree_path:   "",
+    role:            "team-lead",
+    phase:           "orchestration",
+    ...standard null/false defaults...
+  }
+)
+```
+
+The `role: "team-lead"` value identifies this as an orchestrator-owned task (not a teammate task). See [task-list-schema.md](references/task-list-schema.md) for the full schema.
 
 ---
 
